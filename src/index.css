@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0a0a0a;
+  color: #eee;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.card {
+  background: #141414;
+  border: 1px solid #262626;
+  padding: 1.5rem;
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn:hover {
+  background: #1a1a1a;
+  border-color: #444;
+}
+
+.btn-green {
+  background: #059669;
+  border-color: #059669;
+  color: #fff;
+}
+
+.btn-green:hover {
+  background: #047857;
+  border-color: #047857;
+}
+
+.input {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 0.75rem;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.label {
+  font-size: 0.6875rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 0.8125rem;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row-label {
+  color: #555;
+}
+
+.row-value {
+  color: #fff;
+  font-weight: 500;
+}
+
+.text-green {
+  color: #10b981;
+}
+
+.text-orange {
+  color: #f59e0b;
+}
+
+.text-gray {
+  color: #666;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
