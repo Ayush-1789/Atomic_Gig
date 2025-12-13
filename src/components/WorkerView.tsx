@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useReputation, getUnlockBreakdown } from '../context/ReputationContext'
 import { useEscrow, Contract } from '../context/EscrowContext'
 

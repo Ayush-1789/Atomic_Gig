@@ -27,8 +27,8 @@ export function IdentityCard({ worker }: IdentityCardProps) {
                 <span className="row-value">{worker.r5_disputesLost}</span>
             </div>
             <div className="row">
-                <span className="row-label">R6: Staked DJED</span>
-                <span className="row-value">{worker.r6_stakedDjed}</span>
+                <span className="row-label">R6: Pending Amount</span>
+                <span className="row-value">{worker.r6_pendingAmount}</span>
             </div>
             <div className="row">
                 <span className="row-label">Unlock Speed</span>
