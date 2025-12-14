@@ -2,9 +2,9 @@ import { WorkerProfile, getReputationBreakdown } from '../context/ReputationCont
 
 interface IdentityCardProps {
     worker: WorkerProfile
+    expanded?: boolean
 }
 
-// Color class mapping
 const colorClasses: Record<string, string> = {
     green: 'text-green',
     yellow: 'text-yellow',
@@ -17,72 +17,103 @@ const colorBorders: Record<string, string> = {
     red: '#ef4444'
 }
 
-export function IdentityCard({ worker }: IdentityCardProps) {
+export function IdentityCard({ worker, expanded = false }: IdentityCardProps) {
     const rep = getReputationBreakdown(worker)
 
     return (
         <div className="card" style={{ borderColor: colorBorders[rep.color] }}>
             {/* Header: Name + Score */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '1rem' }}>{worker.name}</strong>
-                    <div style={{ fontSize: '0.6875rem', color: '#666', marginTop: '0.25rem' }}>
-                        {rep.tier} • {rep.unlockTimeMs / 1000}s unlock
+                    <div style={{ fontSize: '0.6875rem', color: '#888', marginTop: '0.25rem' }}>
+                        {worker.tagline}
                     </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div className={colorClasses[rep.color]} style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div className={colorClasses[rep.color]} style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
                         {rep.score}
                     </div>
-                    <div style={{ fontSize: '0.6875rem', color: '#666' }}>SCORE</div>
+                    <div style={{ fontSize: '0.5625rem', color: '#666' }}>SCORE</div>
                 </div>
             </div>
 
-            {/* Trust Level Badge */}
-            <div style={{
-                padding: '0.5rem',
-                marginBottom: '1rem',
-                background: rep.color === 'green' ? 'rgba(16,185,129,0.1)' : rep.color === 'yellow' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
-                border: `1px solid ${colorBorders[rep.color]}`,
-                textAlign: 'center'
-            }}>
-                <span style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>
-                    ALGORITHMIC TRUST: <strong className={colorClasses[rep.color]}>{rep.trustLabel}</strong>
-                </span>
-            </div>
-
-            {/* Register Breakdown */}
-            <div style={{ fontSize: '0.75rem' }}>
-                <div className="row">
-                    <span className="row-label">R4: Jobs Completed</span>
-                    <span className="row-value text-green">
-                        {worker.r4_jobsCompleted} <span style={{ color: '#666' }}>(+{rep.jobsBonus} pts)</span>
-                    </span>
+            {/* Trust + Tier */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <div style={{
+                    padding: '0.25rem 0.5rem',
+                    background: rep.color === 'green' ? 'rgba(16,185,129,0.1)' : rep.color === 'yellow' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                    border: `1px solid ${colorBorders[rep.color]}`,
+                    fontSize: '0.625rem'
+                }}>
+                    <span className={colorClasses[rep.color]}>{rep.trustLabel}</span>
                 </div>
-                <div className="row">
-                    <span className="row-label">R5: Disputes Lost</span>
-                    <span className="row-value text-red">
-                        {worker.r5_disputesLost} <span style={{ color: '#666' }}>(-{rep.disputePenalty} pts)</span>
-                    </span>
-                </div>
-                <div className="row">
-                    <span className="row-label">R6: Staked (nanoErg)</span>
-                    <span className="row-value">
-                        {worker.r6_stakedNanoErg.toLocaleString()} <span style={{ color: '#666' }}>(+{rep.stakedBonus} pts)</span>
-                    </span>
+                <div style={{ padding: '0.25rem 0.5rem', border: '1px solid #333', fontSize: '0.625rem', color: '#888' }}>
+                    {rep.tier} • {rep.unlockTimeMs / 1000}s
                 </div>
             </div>
 
-            {/* Score Formula */}
-            <div style={{
-                marginTop: '1rem',
-                padding: '0.5rem',
-                background: '#111',
-                fontSize: '0.625rem',
-                color: '#666',
-                fontFamily: 'monospace'
-            }}>
-                Score = (R4×15) - (Disputes) + (R6÷10)
+            {/* Location + Member Since */}
+            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.6875rem', color: '#666', marginBottom: '0.75rem' }}>
+                <span>{worker.location}</span>
+                <span>Member since {worker.memberSince}</span>
+            </div>
+
+            {/* Skills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.75rem' }}>
+                {worker.skills.slice(0, expanded ? worker.skills.length : 4).map((skill, i) => (
+                    <span
+                        key={i}
+                        style={{
+                            padding: '0.125rem 0.375rem',
+                            background: '#1a1a1a',
+                            border: '1px solid #333',
+                            fontSize: '0.625rem',
+                            color: '#aaa'
+                        }}
+                    >
+                        {skill}
+                    </span>
+                ))}
+                {!expanded && worker.skills.length > 4 && (
+                    <span style={{ fontSize: '0.625rem', color: '#555' }}>+{worker.skills.length - 4}</span>
+                )}
+            </div>
+
+            {/* Bio (collapsed/expanded) */}
+            <div style={{ fontSize: '0.6875rem', color: '#888', lineHeight: 1.4, marginBottom: '0.75rem' }}>
+                {expanded ? worker.bio : worker.bio.slice(0, 100) + (worker.bio.length > 100 ? '...' : '')}
+            </div>
+
+            {/* Portfolio (only if expanded or small) */}
+            {(expanded || worker.portfolio.length <= 2) && worker.portfolio.length > 0 && (
+                <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ fontSize: '0.625rem', color: '#555', marginBottom: '0.25rem' }}>PORTFOLIO</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {worker.portfolio.slice(0, expanded ? 5 : 2).map((item, i) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: '#888' }}>
+                                <span>{item.title}</span>
+                                {item.amount > 0 && <span style={{ color: '#10b981' }}>${item.amount}</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Stats Row */}
+            <div style={{ display: 'flex', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid #222', fontSize: '0.625rem' }}>
+                <div>
+                    <span style={{ color: '#666' }}>Jobs: </span>
+                    <span className="text-green">{worker.r4_jobsCompleted}</span>
+                </div>
+                <div>
+                    <span style={{ color: '#666' }}>Disputes: </span>
+                    <span className={worker.r5_disputesLost > 0 ? 'text-red' : ''}>{worker.r5_disputesLost}</span>
+                </div>
+                <div>
+                    <span style={{ color: '#666' }}>Earnings: </span>
+                    <span>${worker.portfolio.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</span>
+                </div>
             </div>
         </div>
     )

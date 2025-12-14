@@ -13,16 +13,29 @@ export type DisputeRecord = {
 export type TrustTier = 'Tier 1' | 'Tier 2' | 'Probation'
 export type TrustColor = 'green' | 'yellow' | 'red'
 
+export type PortfolioItem = {
+    title: string
+    client: string
+    amount: number
+}
+
 export type WorkerProfile = {
     id: string
     name: string
+    tagline: string
+    bio: string
+    skills: string[]
+    location: string
+    memberSince: string
+    portfolio: PortfolioItem[]
     // On-chain registers (R4, R5, R6)
     r4_jobsCompleted: number
     r5_disputesLost: number
-    r6_stakedNanoErg: number  // Auto-tracked from escrow
+    r6_stakedNanoErg: number
     // Dispute history for time-weighted penalties
     disputeHistory: DisputeRecord[]
 }
+
 
 // ============================================================================
 // SCORE CALCULATION
@@ -114,25 +127,82 @@ export function getReputationBreakdown(worker: WorkerProfile) {
 // ============================================================================
 
 const DEFAULT_WORKERS: WorkerProfile[] = [
+    // GREEN - High Trust (Score > 700)
     {
         id: 'alice',
-        name: 'Alice',
-        r4_jobsCompleted: 68,
-        r5_disputesLost: 0,
-        r6_stakedNanoErg: 0,  // Starts at 0, builds from escrow
-        disputeHistory: [],
-    },
-    {
-        id: 'bob',
-        name: 'Bob',
-        r4_jobsCompleted: 2,
+        name: 'Alice Chen',
+        tagline: 'Senior Full-Stack Developer & Blockchain Specialist',
+        bio: 'Ex-Google engineer with 8+ years of experience building scalable web applications. Specialized in React, Node.js, and smart contract development. I deliver clean, well-documented code on time, every time.',
+        skills: ['React', 'TypeScript', 'Solidity', 'Node.js', 'PostgreSQL', 'AWS'],
+        location: 'San Francisco, USA',
+        memberSince: 'Jan 2022',
+        portfolio: [
+            { title: 'DEX Trading Platform', client: 'DeFi Startup', amount: 5000 },
+            { title: 'NFT Marketplace', client: 'Art Collective', amount: 3500 },
+            { title: 'DAO Governance App', client: 'Crypto Fund', amount: 4200 },
+        ],
+        r4_jobsCompleted: 85,
         r5_disputesLost: 0,
         r6_stakedNanoErg: 0,
         disputeHistory: [],
     },
+    // YELLOW - Medium Trust (Score 200-700)
+    {
+        id: 'bob',
+        name: 'Bob Martinez',
+        tagline: 'UI/UX Designer & Frontend Developer',
+        bio: 'Creative designer with a passion for intuitive interfaces. 3 years of freelance experience. I focus on user-centered design and pixel-perfect implementations. Learning and growing every day!',
+        skills: ['Figma', 'React', 'CSS', 'Tailwind', 'Framer Motion'],
+        location: 'Austin, TX',
+        memberSince: 'Aug 2023',
+        portfolio: [
+            { title: 'Landing Page Redesign', client: 'E-commerce Brand', amount: 800 },
+            { title: 'Mobile App UI Kit', client: 'Fitness Startup', amount: 1200 },
+        ],
+        r4_jobsCompleted: 25,
+        r5_disputesLost: 1,
+        r6_stakedNanoErg: 0,
+        disputeHistory: [{ date: Date.now() - (20 * 24 * 60 * 60 * 1000), amount: 50 }],
+    },
+    // RED - Low Trust (Score < 200)
+    {
+        id: 'charlie',
+        name: 'Charlie Kim',
+        tagline: 'Junior Web Developer',
+        bio: 'Recent bootcamp graduate eager to build my portfolio. Quick learner with strong fundamentals in HTML, CSS, and JavaScript. Looking for opportunities to prove myself!',
+        skills: ['HTML', 'CSS', 'JavaScript', 'React Basics'],
+        location: 'Seoul, Korea',
+        memberSince: 'Nov 2024',
+        portfolio: [
+            { title: 'Personal Portfolio Site', client: 'Self', amount: 0 },
+        ],
+        r4_jobsCompleted: 5,
+        r5_disputesLost: 0,
+        r6_stakedNanoErg: 0,
+        disputeHistory: [],
+    },
+    // GREEN - High Trust with staking bonus
+    {
+        id: 'diana',
+        name: 'Diana Patel',
+        tagline: 'Data Scientist & ML Engineer',
+        bio: 'PhD in Machine Learning from MIT. 5+ years building predictive models and data pipelines for Fortune 500 companies. I turn complex data into actionable insights.',
+        skills: ['Python', 'TensorFlow', 'PyTorch', 'SQL', 'Spark', 'AWS SageMaker'],
+        location: 'London, UK',
+        memberSince: 'Mar 2023',
+        portfolio: [
+            { title: 'Fraud Detection System', client: 'FinTech Company', amount: 8000 },
+            { title: 'Recommendation Engine', client: 'E-commerce Giant', amount: 6500 },
+            { title: 'NLP Chatbot', client: 'Healthcare Startup', amount: 4000 },
+        ],
+        r4_jobsCompleted: 42,
+        r5_disputesLost: 0,
+        r6_stakedNanoErg: 800,
+        disputeHistory: [],
+    },
 ]
 
-const STORAGE_KEY = 'atomic-gig-workers-v3'
+const STORAGE_KEY = 'atomic-gig-workers-v4'
 
 // ============================================================================
 // CONTEXT

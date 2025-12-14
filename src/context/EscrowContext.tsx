@@ -8,7 +8,7 @@ import { buildCreateGigTransaction, buildReleasePaymentTransaction } from '../er
 import { compileContract } from '../ergo/contracts/compiler'
 import { ERGO_CONFIG } from '../ergo/config'
 
-export type ContractStatus = 'LOCKED' | 'PENDING_RELEASE' | 'RELEASED'
+export type ContractStatus = 'LOCKED' | 'PENDING_RELEASE' | 'RELEASED' | 'DISPUTED' | 'REFUNDED'
 export type Contract = {
     id: string
     txId?: string
@@ -19,7 +19,8 @@ export type Contract = {
     createdAt: number
     unlockTime: number
     unlockDuration: number
-    boxId?: string // Track the box ID for on-chain reference
+    boxId?: string
+    disputeReason?: string | null
 }
 
 interface EscrowContextType {
@@ -27,6 +28,8 @@ interface EscrowContextType {
     createGig: (workerId: string, amount: number) => Promise<Contract | null>
     deliverWork: (contractId: string) => Promise<void>
     releasePayment: (contractId: string) => Promise<void>
+    raiseDispute: (contractId: string, reason: string) => void
+    resolveDispute: (contractId: string, winner: 'CLIENT' | 'WORKER') => void
     getTimeRemaining: (contract: Contract) => number
     isProcessing: boolean
     contractAddress: string
@@ -48,7 +51,7 @@ export function EscrowProvider({ children }: { children: ReactNode }) {
     })
     const [isProcessing, setIsProcessing] = useState(false)
     const contractAddress = compileContract('mainnet')
-    const { getWorker, addStake, incrementJobs, removeStake, getReputationBreakdown } = useReputation()
+    const { getWorker, addStake, incrementJobs, removeStake, getReputationBreakdown, addDispute } = useReputation()
     const { state: walletState } = useWallet()
 
     // Persist to localStorage whenever contracts change
@@ -220,8 +223,46 @@ export function EscrowProvider({ children }: { children: ReactNode }) {
 
     const getTimeRemaining = (contract: Contract) => Math.max(0, contract.unlockTime - Date.now());
 
+    // Raise a dispute - freezes the contract
+    const raiseDispute = useCallback((contractId: string, reason: string) => {
+        console.log(`[Escrow] Raising dispute for ${contractId}: ${reason}`);
+        setContracts(prev => prev.map(c => {
+            if (c.id !== contractId) return c;
+            return {
+                ...c,
+                status: 'DISPUTED' as ContractStatus,
+                disputeReason: reason,
+                unlockTime: Infinity // Freeze the timer
+            };
+        }));
+    }, []);
+
+    // Resolve a dispute - admin decision
+    const resolveDispute = useCallback((contractId: string, winner: 'CLIENT' | 'WORKER') => {
+        const contract = contracts.find(c => c.id === contractId);
+        if (!contract) return;
+
+        console.log(`[Escrow] Resolving dispute for ${contractId}: ${winner} wins`);
+
+        if (winner === 'WORKER') {
+            // Worker wins - release payment
+            incrementJobs(contract.workerId);
+            removeStake(contract.workerId, contract.amount * 10000);
+            setContracts(prev => prev.map(c =>
+                c.id === contractId ? { ...c, status: 'RELEASED' as ContractStatus } : c
+            ));
+        } else {
+            // Client wins - refund and slash worker reputation
+            addDispute(contract.workerId, contract.amount);
+            removeStake(contract.workerId, contract.amount * 10000);
+            setContracts(prev => prev.map(c =>
+                c.id === contractId ? { ...c, status: 'REFUNDED' as ContractStatus } : c
+            ));
+        }
+    }, [contracts, incrementJobs, removeStake, addDispute]);
+
     return (
-        <EscrowContext.Provider value={{ contracts, createGig, deliverWork, releasePayment, getTimeRemaining, isProcessing, contractAddress, syncFromBlockchain, resetContracts }}>
+        <EscrowContext.Provider value={{ contracts, createGig, deliverWork, releasePayment, raiseDispute, resolveDispute, getTimeRemaining, isProcessing, contractAddress, syncFromBlockchain, resetContracts }}>
             {children}
         </EscrowContext.Provider>
     )

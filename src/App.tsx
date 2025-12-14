@@ -8,7 +8,7 @@ import { ReputationProvider, useReputation } from './context/ReputationContext'
 import { EscrowProvider } from './context/EscrowContext'
 import { WalletProvider } from './context/WalletContext'
 
-type Role = 'client' | 'worker-alice' | 'worker-bob'
+type Role = 'client' | 'worker-alice' | 'worker-bob' | 'worker-charlie' | 'worker-diana'
 
 function Dashboard() {
     const [role, setRole] = useState<Role>('client')
@@ -29,7 +29,7 @@ function Dashboard() {
                             color: role === 'client' ? '#fff' : '#666',
                         }}
                     >
-                        👔 CLIENT
+                        CLIENT
                     </button>
                     <button
                         onClick={() => setRole('worker-alice')}
@@ -40,7 +40,7 @@ function Dashboard() {
                             color: role === 'worker-alice' ? '#10b981' : '#666',
                         }}
                     >
-                        🔧 ALICE (EXPERT)
+                        ALICE
                     </button>
                     <button
                         onClick={() => setRole('worker-bob')}
@@ -51,7 +51,29 @@ function Dashboard() {
                             color: role === 'worker-bob' ? '#f59e0b' : '#666',
                         }}
                     >
-                        🔧 BOB (NOVICE)
+                        BOB
+                    </button>
+                    <button
+                        onClick={() => setRole('worker-charlie')}
+                        className="btn"
+                        style={{
+                            background: role === 'worker-charlie' ? '#1a1a1a' : 'transparent',
+                            borderColor: role === 'worker-charlie' ? '#ef4444' : '#333',
+                            color: role === 'worker-charlie' ? '#ef4444' : '#666',
+                        }}
+                    >
+                        CHARLIE
+                    </button>
+                    <button
+                        onClick={() => setRole('worker-diana')}
+                        className="btn"
+                        style={{
+                            background: role === 'worker-diana' ? '#1a1a1a' : 'transparent',
+                            borderColor: role === 'worker-diana' ? '#10b981' : '#333',
+                            color: role === 'worker-diana' ? '#10b981' : '#666',
+                        }}
+                    >
+                        DIANA
                     </button>
                     <button
                         onClick={resetToDefaults}
@@ -67,9 +89,11 @@ function Dashboard() {
             {role === 'client' && <ClientView />}
             {role === 'worker-alice' && <WorkerView workerId="alice" />}
             {role === 'worker-bob' && <WorkerView workerId="bob" />}
+            {role === 'worker-charlie' && <WorkerView workerId="charlie" />}
+            {role === 'worker-diana' && <WorkerView workerId="diana" />}
 
             {/* Floating Monitor for Unlock Claims */}
-            <ContractMonitor />
+            <ContractMonitor currentRole={role} />
         </div>
     )
 }

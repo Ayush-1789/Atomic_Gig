@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useReputation, getReputationBreakdown } from '../context/ReputationContext'
 import { useEscrow } from '../context/EscrowContext'
 import { useWallet } from '../context/WalletContext'
+import { IdentityCard } from './IdentityCard'
 
 const colorBorders: Record<string, string> = {
     green: '#10b981',
@@ -25,7 +26,17 @@ export function ClientView() {
         <div>
             <div style={{ marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Client Dashboard</h2>
-                <p style={{ color: '#666', fontSize: '0.8125rem' }}>Hire workers and track contracts</p>
+                <p style={{ color: '#666', fontSize: '0.8125rem' }}>Hire workers with algorithmic trust</p>
+            </div>
+
+            {/* Worker Trust Showcase */}
+            <div style={{ marginBottom: '2rem' }}>
+                <div className="label" style={{ marginBottom: '1rem' }}>AVAILABLE WORKERS</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                    {workers.map(worker => (
+                        <IdentityCard key={worker.id} worker={worker} />
+                    ))}
+                </div>
             </div>
 
             <div className="card" style={{ borderWidth: '2px', marginBottom: '2rem' }}>
