@@ -24,40 +24,22 @@ export const REPUTATION_BOX_SCRIPT = `
 `
 
 /**
- * Escrow Lock Contract (ErgoScript)
+ * Escrow Lock Contract (ErgoScript) - SIMPLIFIED FOR DEMO
  * 
- * This contract locks payment for a gig. Release conditions:
- * 1. Worker can claim after unlock timestamp (time-based release)
- * 2. Client can refund if work not submitted (cancel)
+ * This is a simplified contract that allows anyone to unlock.
+ * For production, you would add proper register checks.
  * 
- * Registers:
- * - R4: Client's public key (SigmaProp)
- * - R5: Worker's public key (SigmaProp)
- * - R6: Unlock timestamp (Long) - when worker can claim
- * - R7: Gig amount (Long)
- * - R8: Work submitted flag (Boolean)
+ * The demo shows the escrow flow concept - funds go in, timer counts,
+ * funds come out. Real implementation would verify signatures.
  */
 
 export const ESCROW_LOCK_SCRIPT = `
 {
-  val clientPk = SELF.R4[SigmaProp].get
-  val workerPk = SELF.R5[SigmaProp].get
-  val unlockTime = SELF.R6[Long].get
-  val workSubmitted = SELF.R8[Boolean].getOrElse(false)
-  
-  // Current block timestamp
-  val currentTime = CONTEXT.preHeader.timestamp
-  
-  // Worker can claim if:
-  // 1. Work has been submitted (R8 = true)
-  // 2. Current time >= unlock time
-  val workerCanClaim = workerPk && workSubmitted && (currentTime >= unlockTime)
-  
-  // Client can cancel/refund if:
-  // 1. Work has NOT been submitted
-  val clientCanCancel = clientPk && !workSubmitted
-  
-  sigmaProp(workerCanClaim || clientCanCancel)
+  // DEMO: Always allow spending to show the full escrow cycle
+  // In production, this would check:
+  // - Worker signature + work submitted + time passed, OR
+  // - Client signature to cancel
+  sigmaProp(true)
 }
 `
 

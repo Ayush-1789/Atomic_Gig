@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { HUDLayout } from './components/HUDLayout'
 import { ClientView } from './components/ClientView'
 import { WorkerView } from './components/WorkerView'
+import { ContractMonitor } from './components/ContractMonitor' // Add Monitor
 import { ReputationProvider, useReputation } from './context/ReputationContext'
 import { EscrowProvider } from './context/EscrowContext'
 import { WalletProvider } from './context/WalletContext'
@@ -65,6 +66,9 @@ function Dashboard() {
             {role === 'client' && <ClientView />}
             {role === 'worker-alice' && <WorkerView workerId="alice" />}
             {role === 'worker-bob' && <WorkerView workerId="bob" />}
+
+            {/* Floating Monitor for Unlock Claims */}
+            <ContractMonitor />
         </div>
     )
 }

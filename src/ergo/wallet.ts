@@ -1,5 +1,5 @@
-// Nautilus Wallet Connector
-// Handles connection, address retrieval, and transaction signing
+// Wallet Connector (Nautilus + SAFEW Support)
+// Connects to browser extension wallets
 
 import { ERGO_CONFIG } from './config'
 
@@ -10,9 +10,10 @@ export type WalletState = {
         erg: number
         djedTest: number
     }
+    walletName: 'safew' | 'nautilus' | null
 }
 
-interface NautilusContext {
+interface ErgoAPI {
     get_change_address(): Promise<string>
     get_used_addresses(): Promise<string[]>
     get_balance(tokenId?: string): Promise<string>
@@ -21,87 +22,78 @@ interface NautilusContext {
 }
 
 class WalletConnector {
-    private context: NautilusContext | null = null
+    private context: ErgoAPI | null = null
+    private activeWallet: 'safew' | 'nautilus' | null = null
 
     async connect(): Promise<WalletState> {
-        if (typeof window === 'undefined') {
-            throw new Error('Window not available')
-        }
+        if (typeof window === 'undefined') throw new Error('Window not available')
 
-        // Wait up to 2 seconds for injection
-        const ergoConnector = await this.waitForConnector()
+        const connector = await this.waitForConnector()
+        if (!connector) throw new Error('No Ergo wallet found. Please install Nautilus.')
 
-        if (!ergoConnector?.nautilus) {
-            throw new Error('Nautilus wallet not detected. Please ensuring the extension is active and refresh the page.')
-        }
+        // Try Nautilus first (since user is using it)
+        const wallets = [
+            { name: 'nautilus', instance: connector.nautilus },
+            { name: 'safew', instance: connector.safew },
+        ]
 
-        try {
-            console.log('[Wallet] Requesting connection...')
-            const connected = await ergoConnector.nautilus.connect()
+        for (const w of wallets) {
+            if (w.instance) {
+                try {
+                    console.log(`[Wallet] Connecting to ${w.name}...`)
+                    const connected = await w.instance.connect()
 
-            if (connected) {
-                console.log('[Wallet] User approved connection. Waiting for API injection...')
+                    if (connected) {
+                        const api = await this.waitForErgoApi()
+                        if (api) {
+                            this.context = api
+                            this.activeWallet = w.name as any
 
-                // Wait for window.ergo to be populated
-                const ergoApi = await this.waitForErgoApi()
+                            const address = await api.get_change_address()
+                            const balance = await this.getBalance()
 
-                if (ergoApi) {
-                    this.context = ergoApi
-                    const address = await ergoApi.get_change_address()
-                    const balance = await this.getBalance()
-
-                    console.log('[Wallet] Connected successfully:', address)
-                    return { connected: true, address, balance }
-                } else {
-                    throw new Error('Wallet connected but API not injected')
+                            console.log(`[Wallet] Connected to ${w.name}:`, address)
+                            return {
+                                connected: true,
+                                address,
+                                balance,
+                                walletName: this.activeWallet
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`[Wallet] Failed to connect to ${w.name}:`, e)
                 }
-            } else {
-                throw new Error('User rejected connection')
             }
-        } catch (err) {
-            console.error('[Wallet] Connection error:', err)
-            throw err
         }
+
+        throw new Error('Connection failed or rejected')
     }
 
-    // Wait for ergoConnector to appear
-    private async waitForConnector(retries = 20, interval = 100): Promise<any> {
+    // Helpers
+    private async waitForConnector(retries = 20): Promise<any> {
         for (let i = 0; i < retries; i++) {
-            if ((window as any).ergoConnector) {
-                return (window as any).ergoConnector
-            }
-            await new Promise(resolve => setTimeout(resolve, interval))
+            if ((window as any).ergoConnector) return (window as any).ergoConnector
+            await new Promise(r => setTimeout(r, 100))
         }
         return null
     }
 
-    // Wait for window.ergo
-    private async waitForErgoApi(retries = 30, interval = 100): Promise<NautilusContext | null> {
+    private async waitForErgoApi(retries = 30): Promise<ErgoAPI | null> {
         for (let i = 0; i < retries; i++) {
-            if ((window as any).ergo) {
-                return (window as any).ergo
-            }
-            await new Promise(resolve => setTimeout(resolve, interval))
+            if ((window as any).ergo) return (window as any).ergo
+            await new Promise(r => setTimeout(r, 100))
         }
         return null
     }
 
     async disconnect(): Promise<void> {
-        const ergoConnector = (window as any).ergoConnector
-        if (ergoConnector?.nautilus?.disconnect) {
-            await ergoConnector.nautilus.disconnect()
+        const connector = (window as any).ergoConnector
+        if (this.activeWallet && connector?.[this.activeWallet]?.disconnect) {
+            await connector[this.activeWallet].disconnect()
         }
         this.context = null
-    }
-
-    // ... (rest of methods same)
-    async isConnected(): Promise<boolean> {
-        // Check connector first
-        const ergoConnector = await this.waitForConnector(5) // quick check
-        if (ergoConnector?.nautilus?.isConnected) {
-            return ergoConnector.nautilus.isConnected()
-        }
-        return this.context !== null
+        this.activeWallet = null
     }
 
     async getAddress(): Promise<string> {
@@ -111,35 +103,45 @@ class WalletConnector {
 
     async getBalance(): Promise<{ erg: number; djedTest: number }> {
         if (!this.context) return { erg: 0, djedTest: 0 }
-        // ... (rest same as before)
         try {
             const ergNano = await this.context.get_balance()
-            const ergBalance = Number(ergNano) / 1e9
-            let djedBalance = 0
-            if (ERGO_CONFIG.tokens.DJED_TEST) {
-                try {
-                    const djedAmount = await this.context.get_balance(ERGO_CONFIG.tokens.DJED_TEST)
-                    djedBalance = Number(djedAmount) || 0
-                } catch { }
-            }
-            return { erg: ergBalance, djedTest: djedBalance }
-        } catch (err) {
+            return { erg: Number(ergNano) / 1e9, djedTest: 0 }
+        } catch {
             return { erg: 0, djedTest: 0 }
         }
     }
 
-    async signTransaction(tx: object): Promise<object> {
-        if (!this.context) throw new Error('Wallet not connected')
-        return this.context.sign_tx(tx)
+    async getAllAddresses(): Promise<string[]> {
+        if (!this.context) return []
+        try {
+            const used = await this.context.get_used_addresses()
+            const change = await this.context.get_change_address()
+            // Combine and dedupe
+            const all = [...new Set([...used, change])]
+            console.log(`[Wallet] Found ${all.length} addresses`)
+            return all
+        } catch {
+            return []
+        }
     }
 
-    async submitTransaction(tx: object): Promise<string> {
+    async signTransaction(unsignedTx: any): Promise<any> {
         if (!this.context) throw new Error('Wallet not connected')
-        return this.context.submit_tx(tx)
+        console.log('[Wallet] Requesting signature from Nautilus...')
+
+        // Convert to EIP-12 format if available
+        const txToSign = unsignedTx.toEIP12Object
+            ? unsignedTx.toEIP12Object()
+            : unsignedTx;
+
+        console.log('[Wallet] TX Format:', txToSign)
+        return this.context.sign_tx(txToSign)
     }
 
-    getContext(): NautilusContext | null {
-        return this.context
+    async submitTransaction(signedTx: any): Promise<string> {
+        if (!this.context) throw new Error('Wallet not connected')
+        console.log('[Wallet] Submitting transaction via Nautilus...')
+        return this.context.submit_tx(signedTx)
     }
 }
 

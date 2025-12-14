@@ -16,6 +16,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         connected: false,
         address: null,
         balance: { erg: 0, djedTest: 0 },
+        walletName: null,
     })
     const [isConnecting, setIsConnecting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -26,7 +27,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
         try {
             const walletState = await wallet.connect()
-            setState(walletState)
+            setState(walletState as WalletState)
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to connect wallet'
             setError(message)
@@ -42,6 +43,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             connected: false,
             address: null,
             balance: { erg: 0, djedTest: 0 },
+            walletName: null
         })
     }, [])
 
