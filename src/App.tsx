@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { HUDLayout } from './components/HUDLayout'
+import { LandingPage } from './components/LandingPage'
 import { ClientView } from './components/ClientView'
 import { WorkerView } from './components/WorkerView'
 import { ContractMonitor } from './components/ContractMonitor' // Add Monitor
@@ -74,13 +75,19 @@ function Dashboard() {
 }
 
 function App() {
+    const [view, setView] = useState<'landing' | 'app'>('landing')
+
     return (
         <WalletProvider>
             <ReputationProvider>
                 <EscrowProvider>
-                    <HUDLayout>
-                        <Dashboard />
-                    </HUDLayout>
+                    {view === 'landing' ? (
+                        <LandingPage onEnterApp={() => setView('app')} />
+                    ) : (
+                        <HUDLayout>
+                            <Dashboard />
+                        </HUDLayout>
+                    )}
                 </EscrowProvider>
             </ReputationProvider>
         </WalletProvider>
