@@ -1,4 +1,4 @@
-import { WorkerProfile, getReputationBreakdown } from '../context/ReputationContext'
+import { WorkerProfile, getReputationBreakdown, useReputation } from '../context/ReputationContext'
 
 interface IdentityCardProps {
     worker: WorkerProfile
@@ -19,6 +19,7 @@ const colorBorders: Record<string, string> = {
 
 export function IdentityCard({ worker, expanded = false }: IdentityCardProps) {
     const rep = getReputationBreakdown(worker)
+    const { addStake } = useReputation()
 
     return (
         <div className="card" style={{ borderColor: colorBorders[rep.color] }}>
@@ -99,6 +100,36 @@ export function IdentityCard({ worker, expanded = false }: IdentityCardProps) {
                     </div>
                 </div>
             )}
+
+            {/* Staking Panel */}
+            <div style={{ marginBottom: '0.75rem', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', border: '1px border #333' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <div style={{ fontSize: '0.625rem', color: '#666' }}>STAKED (DJED)</div>
+                        <div style={{ fontSize: '0.875rem', fontFamily: 'monospace', color: '#eab308' }}>
+                            {worker.r6_stakedNanoErg.toLocaleString()}
+                        </div>
+                    </div>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            addStake(worker.id, 500)
+                        }}
+                        style={{
+                            background: '#1a1a1a',
+                            border: '1px solid #eab308',
+                            color: '#eab308',
+                            fontSize: '0.625rem',
+                            fontWeight: 'bold',
+                            padding: '0.25rem 0.5rem',
+                            cursor: 'pointer',
+                            borderRadius: '2px'
+                        }}
+                    >
+                        + STAKE 500
+                    </button>
+                </div>
+            </div>
 
             {/* Stats Row */}
             <div style={{ display: 'flex', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid #222', fontSize: '0.625rem' }}>

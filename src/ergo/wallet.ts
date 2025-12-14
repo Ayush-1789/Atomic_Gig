@@ -1,8 +1,6 @@
 // Wallet Connector (Nautilus + SAFEW Support)
 // Connects to browser extension wallets
 
-import { ERGO_CONFIG } from './config'
-
 export type WalletState = {
     connected: boolean
     address: string | null
@@ -10,7 +8,7 @@ export type WalletState = {
         erg: number
         djedTest: number
     }
-    walletName: 'safew' | 'nautilus' | null
+    walletName: 'safew' | 'nautilus' | 'burner' | null
 }
 
 interface ErgoAPI {
