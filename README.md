@@ -46,25 +46,7 @@ Higher reputation = Faster access to funds.
 - **🟡 Tier 2 (200-700 pts):** 30-second unlock (Cautionary)
 - **🔴 Probation (<200 pts):** 120-second unlock (High Risk)
 
-### 2. Smart Contract Escrow (eUTXO)
-We utilize Ergo's extended UTXO model to create "Gig Boxes."
-
-**Box Registers:**
-- **R4 (Client PK):** Public key of the employer.
-- **R5 (Worker PK):** Public key of the freelancer.
-- **R6 (Unlock Time):** Timestamp when funds become claimable.
-- **R7 (Status):** State of the contract (LOCKED, DISPUTED, RELEASED).
-- **R8 (Work Submitted):** Boolean flag.
-
-**Logic Flow:**
-1.  **Lock:** Client sends ERG to the contract address. R4-R7 are set.
-2.  **Submit:** Worker proves work (off-chain/on-chain signal).
-3.  **Unlock:** 
-    *   *If* `now > R6` AND `WorkSubmitted == true` -> **Worker Claims**.
-    *   *If* `Dispute == true` -> **Timer Freezes**.
-    *   *If* `AdminResolves` -> **Funds sent to Winner**.
-
-### 3. Tech Stack
+### 2. Tech Stack
 - **Frontend:** React 18, TypeScript, Vite
 - **Styling:** CSS Modules, Custom Animations, Glassmorphism UI
 - **Blockchain Interaction:** 
@@ -155,6 +137,6 @@ npm run dev
 ---
 
 ## 🏆 Hackathon Notes
-This project was built for the **Ergo Unstoppable Hackathon**. It demonstrates the power of the eUTXO model to handle complex logic (Escrow + Reputation + Disputes) in a single, efficient architecture.
+This project was built for the **Ergo Unstoppable Hackathon**
+**Team Elites** : Ayush Khubchandani, Md Hammaduddin and Gautam Gupta
 
-**"Trust is good. verifiable, algorithmic trust is better."**
