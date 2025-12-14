@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useReputation, getReputationBreakdown } from '../context/ReputationContext'
-import { useEscrow } from '../context/EscrowContext'
+import { useEscrow, Contract } from '../context/EscrowContext'
 import { useWallet } from '../context/WalletContext'
 import { IdentityCard } from './IdentityCard'
+import { ChainInspectorModal } from './ChainInspectorModal'
 
 const colorBorders: Record<string, string> = {
     green: '#10b981',
@@ -17,6 +18,7 @@ export function ClientView() {
 
     const [selectedWorker, setSelectedWorker] = useState('alice')
     const [amount, setAmount] = useState(100)
+    const [inspectedContract, setInspectedContract] = useState<Contract | null>(null)
 
     const handleCreate = async () => {
         await createGig(selectedWorker, amount)
@@ -120,16 +122,35 @@ export function ClientView() {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <button
+                                        onClick={() => setInspectedContract(contract)}
+                                        style={{
+                                            padding: '0.25rem 0.5rem',
+                                            fontSize: '0.625rem',
+                                            background: 'transparent',
+                                            border: '1px solid #333',
+                                            color: '#10b981',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        View Box
+                                    </button>
                                     <div style={{
                                         padding: '0.25rem 0.5rem',
                                         fontSize: '0.6875rem',
                                         border: '1px solid',
-                                        borderColor: contract.status === 'RELEASED' ? '#10b981' : contract.status === 'PENDING_RELEASE' ? '#f59e0b' : '#444',
-                                        color: contract.status === 'RELEASED' ? '#10b981' : contract.status === 'PENDING_RELEASE' ? '#f59e0b' : '#666'
+                                        borderColor: contract.status === 'RELEASED' ? '#10b981' :
+                                            contract.status === 'DISPUTED' ? '#ef4444' :
+                                                contract.status === 'PENDING_RELEASE' ? '#f59e0b' : '#444',
+                                        color: contract.status === 'RELEASED' ? '#10b981' :
+                                            contract.status === 'DISPUTED' ? '#ef4444' :
+                                                contract.status === 'PENDING_RELEASE' ? '#f59e0b' : '#666'
                                     }}>
                                         {contract.status === 'LOCKED' && 'LOCKED'}
                                         {contract.status === 'PENDING_RELEASE' && 'RELEASING'}
-                                        {contract.status === 'RELEASED' && '✓ PAID'}
+                                        {contract.status === 'RELEASED' && 'PAID'}
+                                        {contract.status === 'DISPUTED' && 'DISPUTED'}
+                                        {contract.status === 'REFUNDED' && 'REFUNDED'}
                                     </div>
                                 </div>
                             </div>
@@ -152,6 +173,14 @@ export function ClientView() {
                         </div>
                     ))}
                 </div>
+            )}
+            {/* Chain Inspector Modal */}
+            {inspectedContract && (
+                <ChainInspectorModal
+                    contract={inspectedContract}
+                    worker={workers.find(w => w.id === inspectedContract.workerId)!}
+                    onClose={() => setInspectedContract(null)}
+                />
             )}
         </div>
     )

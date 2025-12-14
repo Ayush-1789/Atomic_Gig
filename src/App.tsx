@@ -3,97 +3,149 @@ import { HUDLayout } from './components/HUDLayout'
 import { LandingPage } from './components/LandingPage'
 import { ClientView } from './components/ClientView'
 import { WorkerView } from './components/WorkerView'
-import { ContractMonitor } from './components/ContractMonitor' // Add Monitor
-import { ReputationProvider, useReputation } from './context/ReputationContext'
+import { ContractMonitor } from './components/ContractMonitor'
+import { ReputationProvider, useReputation, getReputationBreakdown } from './context/ReputationContext'
 import { EscrowProvider } from './context/EscrowContext'
 import { WalletProvider } from './context/WalletContext'
 
-type Role = 'client' | 'worker-alice' | 'worker-bob' | 'worker-charlie' | 'worker-diana'
+type ViewMode = 'client' | 'worker'
 
 function Dashboard() {
-    const [role, setRole] = useState<Role>('client')
-    const { resetToDefaults } = useReputation()
+    const [viewMode, setViewMode] = useState<ViewMode>('client')
+    const [selectedWorkerId, setSelectedWorkerId] = useState<string>('alice')
+    const { workers, resetToDefaults } = useReputation()
+
+    const currentRole = viewMode === 'client' ? 'client' : `worker-${selectedWorkerId}`
 
     return (
         <div>
-            {/* Role Toggle */}
-            <div style={{ marginBottom: '2rem' }}>
-                <div className="label" style={{ marginBottom: '0.5rem' }}>VIEW AS</div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {/* Mode Switcher - Clean Tab Style */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '1.5rem',
+                paddingBottom: '1rem',
+                borderBottom: '1px solid #222'
+            }}>
+                {/* View Mode Tabs */}
+                <div style={{ display: 'flex', background: '#111', borderRadius: '6px', padding: '3px' }}>
                     <button
-                        onClick={() => setRole('client')}
-                        className="btn"
+                        onClick={() => setViewMode('client')}
                         style={{
-                            background: role === 'client' ? '#1a1a1a' : 'transparent',
-                            borderColor: role === 'client' ? '#fff' : '#333',
-                            color: role === 'client' ? '#fff' : '#666',
+                            padding: '0.5rem 1.25rem',
+                            border: 'none',
+                            borderRadius: '4px',
+                            background: viewMode === 'client' ? '#fff' : 'transparent',
+                            color: viewMode === 'client' ? '#000' : '#666',
+                            fontWeight: viewMode === 'client' ? 600 : 400,
+                            fontSize: '0.8125rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
                         }}
                     >
-                        CLIENT
+                        Client
                     </button>
                     <button
-                        onClick={() => setRole('worker-alice')}
-                        className="btn"
+                        onClick={() => setViewMode('worker')}
                         style={{
-                            background: role === 'worker-alice' ? '#1a1a1a' : 'transparent',
-                            borderColor: role === 'worker-alice' ? '#10b981' : '#333',
-                            color: role === 'worker-alice' ? '#10b981' : '#666',
+                            padding: '0.5rem 1.25rem',
+                            border: 'none',
+                            borderRadius: '4px',
+                            background: viewMode === 'worker' ? '#10b981' : 'transparent',
+                            color: viewMode === 'worker' ? '#000' : '#666',
+                            fontWeight: viewMode === 'worker' ? 600 : 400,
+                            fontSize: '0.8125rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
                         }}
                     >
-                        ALICE
-                    </button>
-                    <button
-                        onClick={() => setRole('worker-bob')}
-                        className="btn"
-                        style={{
-                            background: role === 'worker-bob' ? '#1a1a1a' : 'transparent',
-                            borderColor: role === 'worker-bob' ? '#f59e0b' : '#333',
-                            color: role === 'worker-bob' ? '#f59e0b' : '#666',
-                        }}
-                    >
-                        BOB
-                    </button>
-                    <button
-                        onClick={() => setRole('worker-charlie')}
-                        className="btn"
-                        style={{
-                            background: role === 'worker-charlie' ? '#1a1a1a' : 'transparent',
-                            borderColor: role === 'worker-charlie' ? '#ef4444' : '#333',
-                            color: role === 'worker-charlie' ? '#ef4444' : '#666',
-                        }}
-                    >
-                        CHARLIE
-                    </button>
-                    <button
-                        onClick={() => setRole('worker-diana')}
-                        className="btn"
-                        style={{
-                            background: role === 'worker-diana' ? '#1a1a1a' : 'transparent',
-                            borderColor: role === 'worker-diana' ? '#10b981' : '#333',
-                            color: role === 'worker-diana' ? '#10b981' : '#666',
-                        }}
-                    >
-                        DIANA
-                    </button>
-                    <button
-                        onClick={resetToDefaults}
-                        className="btn"
-                        style={{ marginLeft: 'auto', borderColor: '#ef4444', color: '#ef4444' }}
-                    >
-                        RESET
+                        Freelancer
                     </button>
                 </div>
+
+                {/* Worker Selector (only when in worker mode) */}
+                {viewMode === 'worker' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#666' }}>as</span>
+                        <select
+                            value={selectedWorkerId}
+                            onChange={(e) => setSelectedWorkerId(e.target.value)}
+                            style={{
+                                padding: '0.5rem 0.75rem',
+                                background: '#1a1a1a',
+                                border: '1px solid #333',
+                                borderRadius: '4px',
+                                color: '#fff',
+                                fontSize: '0.8125rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {workers.map(worker => {
+                                const rep = getReputationBreakdown(worker)
+                                return (
+                                    <option key={worker.id} value={worker.id}>
+                                        {worker.name} ({rep.score} pts)
+                                    </option>
+                                )
+                            })}
+                        </select>
+                    </div>
+                )}
+
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+
+                {/* Reset Button */}
+                <button
+                    onClick={resetToDefaults}
+                    style={{
+                        padding: '0.5rem 1rem',
+                        background: 'transparent',
+                        border: '1px solid #333',
+                        borderRadius: '4px',
+                        color: '#666',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#ef4444'
+                        e.currentTarget.style.color = '#ef4444'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#333'
+                        e.currentTarget.style.color = '#666'
+                    }}
+                >
+                    Reset Demo
+                </button>
             </div>
 
-            {/* View Content */}
-            {role === 'client' && <ClientView />}
-            {role === 'worker-alice' && <WorkerView workerId="alice" />}
-            {role === 'worker-bob' && <WorkerView workerId="bob" />}
-            {role === 'worker-charlie' && <WorkerView workerId="charlie" />}
-            {role === 'worker-diana' && <WorkerView workerId="diana" />}
+            {/* Current View Indicator */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '1.5rem',
+                fontSize: '0.6875rem',
+                color: '#555'
+            }}>
+                <span style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: viewMode === 'client' ? '#fff' : '#10b981'
+                }} />
+                Viewing as {viewMode === 'client' ? 'Client (Employer)' : `${workers.find(w => w.id === selectedWorkerId)?.name || 'Worker'} (Freelancer)`}
+            </div>
 
-            {/* Floating Monitor for Unlock Claims */}
-            <ContractMonitor currentRole={role} />
+            {/* Main Content */}
+            {viewMode === 'client' && <ClientView />}
+            {viewMode === 'worker' && <WorkerView workerId={selectedWorkerId} />}
+
+            {/* Floating Monitor */}
+            <ContractMonitor currentRole={currentRole} />
         </div>
     )
 }
